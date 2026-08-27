@@ -33,3 +33,9 @@ Le modèle identifie les facteurs clés par ordre d'importance :
 2. Angle Zénithal (Zenith) - 18%
 3. Couverture nuageuse (Cloud Cover) - 8%
 4. Température - 5%
+
+Limites du projet :
+En préparant un entretien, j'ai relu mon projet avec œil critique et j'y ai trouvé plusieurs failles.
+Premièrement, les données sont horaires. train_test_split mélange aléatoirement, donc des observations séparées d'une heure (quasi identiques) se retrouvaient de part et d'autre de la frontière train/test. Le modèle interpolait entre voisins temporels au lieu de généraliser. 
+Deuxième problème : le dataset inclut les heures de nuit, où la production est nulle par construction ; une part importante de mon score venait de prédictions triviales. 
+Troisième : je n'avais aucun baseline, donc aucun moyen de savoir si 0,96 était bon ou médiocre.

@@ -1,6 +1,6 @@
 # ☀️ Solar Power Prediction - IA & Dashboard Interactif
 
-Démo Live : "https://github.com/Wael787/solar_prediction](https://wael787.github.io/solar_prediction/".
+**Démo :** [wael787.github.io/solar_prediction](https://wael787.github.io/solar_prediction/)
 
 ## 📌 Présentation du Projet
 Ce projet vise à prédire la production d'énergie photovoltaïque en fonction des variables météorologiques et astronomiques. Il combine une phase d'analyse de données massives (Machine Learning) et une phase de déploiement (Web App).

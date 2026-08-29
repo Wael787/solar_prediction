@@ -1,9 +1,9 @@
 # ============================================================
 #  SOLAR ENERGY PREDICTION — Kaggle Notebook
-#  Auteur : Wael WADIH | CY Tech — 2ème année Cycle Ingénieur
+#  Auteur : Wael WADIH | CY Tech
 # ============================================================
 
-# ─── 0. IMPORTS ─────────────────────────────────────────────
+# 0 - IMPORTS
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,19 +11,19 @@ import seaborn as sns
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, r2_score
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
 
 import warnings
 warnings.filterwarnings("ignore")
 
-# ─── 1. CHARGEMENT DES DONNÉES ──────────────────────────────
+# 1 - CHARGEMENT DES DONNÉES 
 df = pd.read_csv("/kaggle/input/your-dataset/solar_data.csv")  # ← adapter le chemin
 print("Shape :", df.shape)
 print(df.head())
+df.info()
+print(df.describe())
 
-
-# ─── 2. NETTOYAGE DES DONNÉES ───────────────────────────────
+# 2 - NETTOYAGE DES DONNÉES 
 print("\n── Valeurs manquantes par colonne ──")
 print(df.isnull().sum())
 
@@ -32,12 +32,14 @@ df.dropna(subset=["generated_power_kw"], inplace=True)
 
 # Remplissage des NaN numériques par la médiane (robuste aux outliers)
 for col in df.select_dtypes(include=[np.number]).columns:
-    df[col].fillna(df[col].median(), inplace=True)
+    df[col] = df[col].fillna(df[col].median())
 
 print(f"\nDataset après nettoyage : {df.shape[0]} lignes, {df.shape[1]} colonnes")
+print("Colonnes :", list(df.columns))
+print("Part de zéros dans la cible :", (df[TARGET] == 0).mean())    #"Quelle proportion de données de nuit (trompeuses)"
 
 
-# ─── 3. FEATURE SELECTION ───────────────────────────────────
+# 3  FEATURE SELECTION 
 # Features sélectionnées selon leur pertinence physique + corrélation attendue
 FEATURES = [
     "shortwave_radiation_backwards_sfc",  # rayonnement solaire direct → clé
@@ -59,7 +61,7 @@ X = df[FEATURES]
 y = df[TARGET]
 
 
-# ─── 4. VISUALISATION — HEATMAP DE CORRÉLATION ──────────────
+# 4 - VISUALISATION - HEATMAP DE CORRÉLATION
 plt.figure(figsize=(12, 9))
 corr_matrix = df[FEATURES + [TARGET]].corr()
 
@@ -81,49 +83,35 @@ plt.savefig("heatmap_correlation.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("→ Heatmap sauvegardée.")
 
+# 5 - ENTRAINEMENT ET EVALUATION
+def evaluer(X_tr, X_te, y_tr, y_te, nom):
+    m = RandomForestRegressor(
+        n_estimators=200, max_depth=15, min_samples_split=5,
+        min_samples_leaf=2, random_state=42, n_jobs=-1
+    )
+    m.fit(X_tr, y_tr)
+    p_tr, p_te = m.predict(X_tr), m.predict(X_te)
+    print(f"── {nom} ──")
+    print(f"  R² train  : {r2_score(y_tr, p_tr):.4f}")
+    print(f"  R² test   : {r2_score(y_te, p_te):.4f}")
+    print(f"  MAE test  : {mean_absolute_error(y_te, p_te):.2f} kW")
+    print(f"  RMSE test : {root_mean_squared_error(y_te, p_te):.2f} kW")
+    return m, p_te
 
-# ─── 5. SPLIT TRAIN / TEST ──────────────────────────────────
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-print(f"\nTrain : {X_train.shape[0]} échantillons | Test : {X_test.shape[0]} échantillons")
+# 5a. l'ancien split, aléatoire
+Xa_tr, Xa_te, ya_tr, ya_te = train_test_split(X, y, test_size=0.2, random_state=42)
+modele_alea, _ = evaluer(Xa_tr, Xa_te, ya_tr, ya_te, "Split ALÉATOIRE")
 
+# 5b. le split chronologique
+coupe = int(len(df) * 0.8)
+Xc_tr, Xc_te = X.iloc[:coupe], X.iloc[coupe:]
+yc_tr, yc_te = y.iloc[:coupe], y.iloc[coupe:]
+modele_chrono, pred_chrono = evaluer(Xc_tr, Xc_te, yc_tr, yc_te, "Split CHRONOLOGIQUE")
 
-# ─── 6. ENTRAÎNEMENT — RANDOM FOREST REGRESSOR ──────────────
-rf_model = RandomForestRegressor(
-    n_estimators=200,        # 200 arbres de décision
-    max_depth=15,            # profondeur max pour éviter le surapprentissage
-    min_samples_split=5,
-    min_samples_leaf=2,
-    random_state=42,
-    n_jobs=-1,               # utilise tous les cœurs CPU disponibles
-)
-
-print("\nEntraînement du modèle Random Forest...")
-rf_model.fit(X_train, y_train)
-print("Entraînement terminé.")
-
-
-# ─── 7. ÉVALUATION DES PERFORMANCES ─────────────────────────
-y_pred = rf_model.predict(X_test)
-
-mae  = mean_absolute_error(y_test, y_pred)
-r2   = r2_score(y_test, y_pred)
-rmse = np.sqrt(np.mean((y_test - y_pred) ** 2))
-
-print("\n══════════════════════════════════════")
-print("       MÉTRIQUES DE PERFORMANCE")
-print("══════════════════════════════════════")
-print(f"  MAE  (Erreur absolue moyenne) : {mae:.2f} kW")
-print(f"  RMSE (Erreur quadratique)     : {rmse:.2f} kW")
-print(f"  R²   (Coefficient détermin.)  : {r2:.4f}")
-print("══════════════════════════════════════")
-
-
-# ─── 8. VISUALISATION — PRÉDICTIONS vs RÉALITÉ ──────────────
+# 6 - VISUALISATION — PRÉDICTIONS vs RÉALITÉ 
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-# 8a. Scatter : Réel vs Prédit
+# 6a. Scatter : Réel vs Prédit
 axes[0].scatter(y_test, y_pred, alpha=0.4, color="steelblue", s=15)
 lims = [min(y_test.min(), y_pred.min()), max(y_test.max(), y_pred.max())]
 axes[0].plot(lims, lims, "r--", linewidth=1.5, label="Prédiction parfaite")
@@ -133,7 +121,7 @@ axes[0].set_title(f"Réel vs Prédit  |  R² = {r2:.3f}")
 axes[0].legend()
 axes[0].grid(alpha=0.3)
 
-# 8b. Distribution des résidus
+# 6b. Distribution des résidus
 residuals = y_test - y_pred
 axes[1].hist(residuals, bins=40, color="steelblue", edgecolor="white", alpha=0.8)
 axes[1].axvline(0, color="red", linestyle="--", linewidth=1.5)
@@ -149,7 +137,7 @@ plt.show()
 print("→ Graphiques d'évaluation sauvegardés.")
 
 
-# ─── 9. IMPORTANCE DES FEATURES ─────────────────────────────
+# 9 - IMPORTANCE DES FEATURES 
 feat_importances = pd.Series(rf_model.feature_importances_, index=FEATURES)
 feat_importances = feat_importances.sort_values(ascending=True)
 
@@ -164,7 +152,7 @@ plt.show()
 print("→ Feature importances sauvegardées.")
 
 
-# ─── 10. AUTO-TEST AVEC DONNÉES FICTIVES ────────────────────
+# 10 - AUTO-TEST AVEC DONNÉES FICTIVES 
 print("\n── Auto-test : prédiction sur données fictives ──")
 
 test_fictif = pd.DataFrame([{

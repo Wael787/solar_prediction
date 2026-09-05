@@ -108,6 +108,11 @@ Xc_tr, Xc_te = X.iloc[:coupe], X.iloc[coupe:]
 yc_tr, yc_te = y.iloc[:coupe], y.iloc[coupe:]
 modele_chrono, pred_chrono = evaluer(Xc_tr, Xc_te, yc_tr, yc_te, "Split CHRONOLOGIQUE")
 
+rf_model = modele_chrono
+y_test   = yc_te
+y_pred   = pred_chrono
+r2       = r2_score(y_test, y_pred)
+
 # 6 - VISUALISATION — PRÉDICTIONS vs RÉALITÉ 
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 

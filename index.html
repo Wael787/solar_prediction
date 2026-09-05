@@ -581,14 +581,15 @@
       <canvas id="chartScatter" role="img" aria-label="Graphique de dispersion réel versus prédit"></canvas>
     </div>
     <div style="margin-top:0.75rem;font-family:var(--font-mono);font-size:0.68rem;color:var(--muted);display:flex;gap:1rem;">
-      <span>R² <span style="color:var(--amber)">≈ 0.52</span></span>
-      <span>MAE <span style="color:var(--amber)">≈ 490 kW</span></span>
-      <span>RMSE <span style="color:var(--amber)">≈ 631 kW</span></span>
-    </div>
-    <div style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.62rem;color:var(--muted);">
+     <div id="scatter-metrics" style="margin-top:0.75rem;font-family:var(--font-mono);font-size:0.68rem;color:var(--muted);display:flex;gap:1rem;">
+      Chargement…
+     </div>
+     <div id="scatter-sub" style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.62rem;color:var(--muted);"></div>
+     </div>
+     <div style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.62rem;color:var(--muted);">
       Split chronologique · 843 heures de test
-    </div>
-  </div>
+     </div>
+   </div>
 
 </main>
 
@@ -771,6 +772,87 @@ function initChart24h() {
           grid: { color: 'rgba(255,255,255,0.04)' },
           border: { color: 'rgba(255,255,255,0.06)' },
           min: 0, max: 3600
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// 5. SCATTER CHART — données réelles du jeu de test
+// ═══════════════════════════════════════════════
+async function initScatterChart() {
+  let data;
+  try {
+    const res = await fetch('predictions.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    data = await res.json();
+  } catch (err) {
+    document.getElementById('scatter-metrics').textContent =
+      'predictions.json introuvable — graphique non chargé.';
+    console.error(err);
+    return;
+  }
+
+  const maxKw = Math.ceil(data.max_kw / 500) * 500;
+
+  document.getElementById('scatter-metrics').innerHTML = `
+    <span>R² <span style="color:var(--amber)">${data.r2}</span></span>
+    <span>MAE <span style="color:var(--amber)">${data.mae} kW</span></span>
+    <span>RMSE <span style="color:var(--amber)">${data.rmse} kW</span></span>`;
+  document.getElementById('scatter-sub').textContent =
+    `Split chronologique · ${data.n_test} heures de test · ${data.points.length} points affichés`;
+
+  new Chart(document.getElementById('chartScatter').getContext('2d'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Jeu de test',
+          data: data.points,
+          backgroundColor: 'rgba(245,158,11,0.5)',
+          pointRadius: 3,
+        },
+        {
+          label: 'Prédiction parfaite',
+          data: [{ x: 0, y: 0 }, { x: maxKw, y: maxKw }],
+          type: 'line',
+          borderColor: 'rgba(239,68,68,0.6)',
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          pointRadius: 0,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0d1117', borderColor: '#f59e0b', borderWidth: 1,
+          titleColor: '#f59e0b', bodyColor: '#e2e8f0',
+          callbacks: {
+            label: c => c.datasetIndex === 0
+              ? ` Réel : ${c.parsed.x} kW  |  Prédit : ${c.parsed.y} kW`
+              : null
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#64748b', font: { size: 10, family: "'Share Tech Mono'" }, callback: v => v + ' kW' },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: 'rgba(255,255,255,0.06)' },
+          min: 0, max: maxKw,
+          title: { display: true, text: 'Valeurs réelles (kW)', color: '#64748b', font: { size: 10 } }
+        },
+        y: {
+          ticks: { color: '#64748b', font: { size: 10, family: "'Share Tech Mono'" }, callback: v => v + ' kW' },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: 'rgba(255,255,255,0.06)' },
+          min: 0, max: maxKw,
+          title: { display: true, text: 'Valeurs prédites (kW)', color: '#64748b', font: { size: 10 } }
         }
       }
     }

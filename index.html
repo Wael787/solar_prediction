@@ -493,7 +493,7 @@
       <div class="slider-header">
         <div class="slider-name">
           Rayonnement solaire
-          <span class="feat-badge">38%</span>
+          <span class="feat-badge">6%</span>
         </div>
         <div class="slider-val"><span id="val-radiation">350</span> W/m²</div>
       </div>
@@ -506,7 +506,7 @@
       <div class="slider-header">
         <div class="slider-name">
           Couverture nuageuse
-          <span class="feat-badge">8%</span>
+          <span class="feat-badge">14%</span>
         </div>
         <div class="slider-val"><span id="val-clouds">20</span> %</div>
       </div>
@@ -519,7 +519,7 @@
       <div class="slider-header">
         <div class="slider-name">
           Angle zénithal
-          <span class="feat-badge">18%</span>
+          <span class="feat-badge">10%</span>
         </div>
         <div class="slider-val"><span id="val-zenith">55</span> °</div>
       </div>
@@ -532,7 +532,7 @@
       <div class="slider-header">
         <div class="slider-name">
           Température
-          <span class="feat-badge">5%</span>
+          <span class="feat-badge">3%</span>
         </div>
         <div class="slider-val"><span id="val-temp">18</span> °C</div>
       </div>
@@ -545,7 +545,7 @@
       <div class="slider-header">
         <div class="slider-name">
           Humidité relative
-          <span class="feat-badge">3%</span>
+          <span class="feat-badge">4%</span>
         </div>
         <div class="slider-val"><span id="val-humidity">50</span> %</div>
       </div>
@@ -614,19 +614,21 @@ function predictPower(radiation, clouds, zenith, temp, humidity) {
 // 2. FEATURE IMPORTANCE DATA
 // ═══════════════════════════════════════════════
 const features = [
-  { key: 'radiation', name: 'shortwave_rad', pct: 38 },
-  { key: 'zenith',    name: 'zenith',        pct: 18 },
-  { key: 'other1',    name: 'angle_incidence',pct: 15 },
-  { key: 'other2',    name: 'azimuth',        pct: 10 },
-  { key: 'clouds',    name: 'cloud_cover',    pct: 8  },
-  { key: 'temp',      name: 'temperature',    pct: 5  },
-  { key: 'humidity',  name: 'humidity',       pct: 3  },
-  { key: 'other3',    name: 'low_cloud',      pct: 1.5},
-  { key: 'other4',    name: 'wind_speed',     pct: 1  },
+  { key: 'incidence', name: 'angle_incidence', pct: 48   },
+  { key: 'clouds',    name: 'cloud_cover',     pct: 14   },
+  { key: 'azimuth',   name: 'azimuth',         pct: 11   },
+  { key: 'zenith',    name: 'zenith',          pct: 10   },
+  { key: 'radiation', name: 'shortwave_rad',   pct: 6    },
+  { key: 'humidity',  name: 'humidity',        pct: 4    },
+  { key: 'wind',      name: 'wind_speed',      pct: 3    },
+  { key: 'temp',      name: 'temperature',     pct: 3    },
+  { key: 'lowcloud',  name: 'low_cloud',       pct: 1    },
+  { key: 'highcloud', name: 'high_cloud',      pct: 1    },
+  { key: 'midcloud',  name: 'medium_cloud',    pct: 0.8  },
 ];
-
 function buildFeatBars(activeKey) {
   const container = document.getElementById('feat-bars');
+  const maxPct = Math.max(...features.map(f => f.pct));   
   container.innerHTML = '';
   features.forEach(f => {
     const isHL = (f.key === activeKey);
@@ -635,7 +637,7 @@ function buildFeatBars(activeKey) {
     row.innerHTML = `
       <div class="feat-name">${f.name}</div>
       <div class="feat-bar-bg">
-        <div class="feat-bar" style="width:${f.pct * 2.5}%"></div>
+        <div class="feat-bar" style="width:${(f.pct / maxPct) * 100}%"></div>
       </div>
       <div class="feat-pct">${f.pct}%</div>`;
     container.appendChild(row);

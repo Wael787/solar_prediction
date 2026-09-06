@@ -3,7 +3,6 @@
 **Démo :** [wael787.github.io/solar_prediction](https://wael787.github.io/solar_prediction/)
 **Auteur :** Wael WADIH — Étudiant ingénieur, CY Tech
 
----
 
 ## 📌 Le projet
 
@@ -14,14 +13,11 @@ Le projet a été **repris et corrigé** après une relecture critique : la prem
 annonçait un R² de 0,96 obtenu avec un protocole d'évaluation défaillant. Ce README
 documente les résultats mesurés sous un protocole corrigé, et pourquoi ils sont plus bas.
 
----
 
 ## 📊 Données
 
 *Solar Energy Power Generation Dataset* (Kaggle — `stucom`)
 
-| | |
-|---|---|
 | Observations | 4 213 (horaires) |
 | Variables | 21 |
 | Cible | `generated_power_kw`, de 0,0006 à 3 056,79 kW (moyenne 1 134 kW) |
@@ -32,15 +28,13 @@ Onze variables retenues, choisies pour leur pertinence physique : rayonnement,
 géométrie solaire (zénith, angle d'incidence, azimut), couverture nuageuse à quatre
 niveaux, température, humidité, vent.
 
----
 
 ## 🎯 Résultats
 
 Random Forest — 200 arbres, `max_depth=15`, `min_samples_leaf=2`.
 Le modèle est entraîné **deux fois**, avec deux protocoles de découpage train/test.
 
-| | Split aléatoire | **Split chronologique** |
-|---|---|---|
+| Split aléatoire | **Split chronologique** |
 | R² train | 0,945 | 0,948 |
 | **R² test** | 0,802 | **0,517** |
 | MAE test | 269 kW | **490 kW** |
@@ -67,11 +61,6 @@ des journées qu'il n'a jamais vues. C'est la tâche réelle.
 - **Baseline** : prédire systématiquement la moyenne donne un R² de 0 par définition.
   Le modèle apprend donc quelque chose de réel, mais reste loin d'un niveau exploitable.
 
-# Sections à ajouter au README
-
-> À insérer **après** la section « 🎯 Résultats », avant « 📈 Importance des variables ».
-> La section « 🚧 Limites et pistes » existante est à remplacer par celle donnée en fin de document.
-
 ---
 
 ## 🧪 À quoi comparer ce résultat ?
@@ -80,7 +69,6 @@ Un R² de 0,517 ne veut rien dire sans point de comparaison. Trois modèles ont 
 évalués sur le **même** jeu de test chronologique (843 heures) :
 
 | Modèle | R² test | MAE test |
-|---|---|---|
 | Moyenne constante (baseline naïve) | −0,028 | 840,2 kW |
 | Régression linéaire | **0,517** | 531,3 kW |
 | Random Forest (200 arbres, `max_depth=15`) | **0,517** | 489,9 kW |
